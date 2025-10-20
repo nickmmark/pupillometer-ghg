@@ -18,7 +18,7 @@ def heatmap_with_isobars(OCC, USE, Z, title, xlabel, ylabel, outfile,
     if levels is None:
         max_val = Z.max() if vmax is None else vmax
         levels = np.arange(2, max(4, int(max_val)+2), 2)
-    cs = plt.contour(OCC, USE, Z, colors='white', linewidths=1, levels=levels)
+    cs = plt.contour(OCC, OCC*0 + USE[:, None], Z, colors='white', linewidths=1, levels=levels)
     plt.clabel(cs, inline=True, fontsize=8, fmt="%.0f")
     if hlines:
         for y, style in hlines:
