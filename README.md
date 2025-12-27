@@ -21,7 +21,9 @@ pupillometry-carbon/
 │   ├── assumptions.json     # Emission factors and scenario metadata
 │   └── results.csv          # Generated outputs (kg CO₂e/bed-year)
 └── docs/
-    └── methods.md           # This file (detailed documentation)
+│   └── methods.md           # This file (detailed documentation)
+│
+└── index.html             # Interactive web based version of the primary figures (allows you to easily change assumptions)
 ```
 
 Analyses were performed on macOS Sequioa 15.6 using:
