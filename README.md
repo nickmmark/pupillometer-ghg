@@ -5,6 +5,8 @@ calculate the greenhouse gas emissions from penlights and hardware pupillometers
 All analyses and figures in this study were generated using open-source Python tools. The workflow models the life-cycle carbon footprint (kg CO₂e) of single-use ICU devices, annualized to per-bed-year values under varying occupancy and utilization.
 
 The repository is structured as a lightweight, fully reproducible pipeline.
+
+Try the interactive version of the calculator [here]().
 ```
 pupillometry-carbon/
 ├── src/pupillo/
