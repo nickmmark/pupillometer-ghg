@@ -1,5 +1,5 @@
 # pupillometer-ghg
-calculate the greenhouse gas emissions from penlights and hardware pupillometers
+calculate the greenhouse gas emissions from disposable penlights and hardware pupillometers
 
 ## Overview
 All analyses and figures in this study were generated using open-source Python tools. The workflow models the life-cycle carbon footprint (kg CO₂e) of single-use ICU devices, annualized to per-bed-year values under varying occupancy and utilization.
@@ -7,6 +7,12 @@ All analyses and figures in this study were generated using open-source Python t
 The repository is structured as a lightweight, fully reproducible pipeline.
 
 Try the interactive version of the calculator [here](https://nickmmark.github.io/pupillometer-ghg/).
+
+### Calculations
+
+
+
+### Files
 ```
 pupillometry-carbon/
 ├── src/pupillo/
@@ -28,6 +34,7 @@ pupillometry-carbon/
 └── index.html             # Interactive web based version of the primary figures (allows you to easily change assumptions)
 ```
 
+### Libraries
 Analyses were performed on macOS Sequioa 15.6 using:
 * Python 3.11
 * NumPy 1.26
@@ -36,3 +43,5 @@ Analyses were performed on macOS Sequioa 15.6 using:
 * SciPy 1.11 (for contour interpolation)
 * Seaborn 0.13 (for color palettes)
 
+
+### References
