@@ -2,15 +2,21 @@
 calculate the greenhouse gas emissions from disposable penlights and hardware pupillometers
 
 ## Overview
+
+
+### Calculations
+Carbon emissions per ICU bed was the metric used.
+```math
+E_{bed} = S_p \times \left( \frac{365 \times occupancy}{LOS} \right) \times f_{use}
+```
+
+
+## How this repository works
 All analyses and figures in this study were generated using open-source Python tools. The workflow models the life-cycle carbon footprint (kg CO₂e) of single-use ICU devices, annualized to per-bed-year values under varying occupancy and utilization.
 
 The repository is structured as a lightweight, fully reproducible pipeline.
 
 Try the interactive version of the calculator [here](https://nickmmark.github.io/pupillometer-ghg/).
-
-### Calculations
-
-
 
 ### Files
 ```
