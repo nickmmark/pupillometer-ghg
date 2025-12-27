@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pupillometer GHG — Interactive Assumptions Explorer</title>
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#101a2e;
+      --text:#e6eefc;
+      --muted:#a7b4d0;
+      --border:rgba(255,255,255,0.12);
+      --shadow: 0 10px 35px rgba(0,0,0,0.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(96,165,250,0.20), transparent 60%),
+                  radial-gradient(900px 700px at 90% 10%, rgba(94,234,212,0.16), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+    }
+    header{
+      padding: 18px 18px 10px 18px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    h1{margin:0;font-size:18px}
+    .sub{margin:6px 0 0 0;color:var(--muted);font-size:13px;line-height:1.35}
+
+    .layout{
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 8px 18px 22px 18px;
+      display:grid;
+      grid-template-columns: 460px 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.03));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel-header{
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.16);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .panel-header h2{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:0.2px;
+    }
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(0,0,0,0.12);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(230,238,252,0.75);
+    }
+    .panel-body{ padding: 12px 14px 14px 14px; }
+
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .grid1{ display:grid; grid-template-columns: 1fr; gap:10px; }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      padding: 10px 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.10);
+    }
+    label{
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+    }
+    label .unit{ font-family: var(--mono); font-size: 11px; color: rgba(230,238,252,0.70); }
+    input, select{
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 9px 10px;
+      outline:none;
+      font-size: 13px;
+      font-family: var(--sans);
+    }
+    input[type="number"]{ font-family: var(--mono); }
+
+    button{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 9px 12px;
+      cursor:pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      transition: transform 0.05s ease, background 0.2s ease;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    button:hover{ background: rgba(255,255,255,0.10); }
+    button:active{ transform: translateY(1px); }
+
+    .divider{ height: 1px; background: rgba(255,255,255,0.08); margin: 12px 0; }
+    .hint{ color: rgba(230,238,252,0.62); font-size: 12px; line-height: 1.35; margin-top: 8px; }
+    .danger{ color: rgba(251,113,133,0.95); font-size: 12px; margin-top: 10px; }
+    .inline-note{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(230,238,252,0.72);
+      margin-top: 6px;
+      line-height: 1.25;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .kpi{
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.10);
+    }
+    .kpi .k{ color: var(--muted); font-size: 12px; }
+    .kpi .v{ font-family: var(--mono); font-size: 16px; font-weight: 900; margin-top: 6px; }
+
+    .equation{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(230,238,252,0.78);
+      line-height: 1.35;
+      padding: 10px 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.10);
+      white-space: pre-wrap;
+    }
+
+    /* IMPORTANT: do NOT force width:100% on the plot, or it will be squished. */
+    #chart{
+      display:block;
+      width:auto;
+      height:auto;
+    }
+
+    /* Scroll horizontally instead of squishing the figure when it's wider than the column */
+    .chart-scroll{
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: visible;
+      padding-bottom: 6px;
+    }
+    #chartWrap{
+      width: max-content;
+      margin: 0 auto;
+    }
+
+    .row-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .footer{
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 18px 24px 18px;
+      color: rgba(230,238,252,0.55);
+      font-size: 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>Pupillometer GHG — Interactive heatmaps (publication-style)</h1>
+    <p class="sub">
+      Manual INNER sizing controls the plot box in pixels. Colorbar length can be fixed in pixels so it doesn’t expand when the figure width changes.
+      Plot box is square in pixels (not “equal data units per pixel”).
+    </p>
+  </div>
+  <div class="pill" id="statusPill">preset: Penlight (single→shared)</div>
+</header>
+
+<div class="layout">
+  <!-- Controls -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Assumptions + layout controls</h2>
+      <span class="pill" id="updatedPill">updated: —</span>
+    </div>
+    <div class="panel-body">
+      <div class="grid1">
+        <div class="field">
+          <label>Preset scenario<span class="unit">selector</span></label>
+          <select id="preset">
+            <option value="penlight" selected>Penlight (single→shared)</option>
+            <option value="spec_low">SPEC low</option>
+            <option value="spec_mid">SPEC mid</option>
+            <option value="spec_high">SPEC high</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Sₚ (savings per patient)<span class="unit">kg CO₂e/patient</span></label>
+          <input id="spKg" type="number" step="0.01" min="0" value="0.20" />
+        </div>
+        <div class="field">
+          <label>LOS (length of stay)<span class="unit">days</span></label>
+          <input id="losDays" type="number" step="0.1" min="0.1" value="4.0" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>ICU size<span class="unit">beds</span></label>
+          <input id="beds" type="number" step="1" min="1" value="24" />
+        </div>
+        <div class="field">
+          <label>Plot resolution<span class="unit">grid</span></label>
+          <select id="gridN">
+            <option value="61">61×61 (fast)</option>
+            <option value="81" selected>81×81 (repo-like)</option>
+            <option value="121">121×121 (smooth)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Occupancy min<span class="unit">fraction</span></label>
+          <input id="occMin" type="number" step="0.01" min="0" max="1" value="0.60" />
+        </div>
+        <div class="field">
+          <label>Occupancy max<span class="unit">fraction</span></label>
+          <input id="occMax" type="number" step="0.01" min="0" max="1" value="1.00" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Use fraction min<span class="unit">fraction</span></label>
+          <input id="useMin" type="number" step="0.01" min="0" max="1" value="0.00" />
+        </div>
+        <div class="field">
+          <label>Use fraction max<span class="unit">fraction</span></label>
+          <input id="useMax" type="number" step="0.01" min="0" max="1" value="1.00" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Isobars (spacing)<span class="unit">kg</span></label>
+          <input id="isoStep" type="number" step="1" min="1" value="2" />
+        </div>
+        <div class="field">
+          <label>Colorbar max (auto if blank)<span class="unit">kg</span></label>
+          <input id="vmax" type="number" step="1" min="0" placeholder="auto" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Guide lines (Penlight figure)<span class="unit">toggle</span></label>
+          <select id="guides">
+            <option value="on" selected>On (y=0.99 dashed; y=0.2 dash-dot)</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Plot title<span class="unit">text</span></label>
+          <input id="title" type="text" value="CO₂e savings per bed-year — Penlight (single vs shared use)" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Sizing controls -->
+      <div class="grid1">
+        <div class="field">
+          <label>Plot sizing mode<span class="unit">how size is computed</span></label>
+          <select id="sizeMode">
+            <option value="auto">Auto: fit column; inner plot defaults square</option>
+            <option value="manualInner" selected>Manual INNER plot size (controls actual plot box)</option>
+            <option value="manualFigure">Manual FIGURE size (outer figure px)</option>
+          </select>
+          <div class="inline-note">
+            To change the plot itself, use Manual INNER sizing. The chart panel will scroll horizontally if the figure is wider than the column.
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>INNER plot width<span class="unit">px</span></label>
+          <input id="innerPlotW" type="number" step="10" min="200" value="500" />
+        </div>
+        <div class="field">
+          <label>INNER plot height<span class="unit">px</span></label>
+          <input id="innerPlotH" type="number" step="10" min="200" value="500" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>FIGURE width<span class="unit">px</span></label>
+          <input id="figW" type="number" step="10" min="300" placeholder="auto" />
+        </div>
+        <div class="field">
+          <label>FIGURE height<span class="unit">px</span></label>
+          <input id="figH" type="number" step="10" min="300" placeholder="auto" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Left margin<span class="unit">px</span></label>
+          <input id="mLeft" type="number" step="1" min="0" value="85" />
+        </div>
+        <div class="field">
+          <label>Right margin<span class="unit">px</span></label>
+          <input id="mRight" type="number" step="1" min="0" value="25" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Top margin<span class="unit">px</span></label>
+          <input id="mTop" type="number" step="1" min="0" value="70" />
+        </div>
+        <div class="field">
+          <label>Bottom margin (room for colorbar)<span class="unit">px</span></label>
+          <input id="mBottom" type="number" step="1" min="0" value="150" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Colorbar controls -->
+      <div class="grid1">
+        <div class="field">
+          <label>Colorbar length mode<span class="unit">fixed vs stretch</span></label>
+          <select id="cbLenMode">
+            <option value="matchPlotPx" selected>Fixed px: match INNER plot width</option>
+            <option value="fixedPx">Fixed px: use the value below</option>
+            <option value="fillFigure">Stretch: fill figure width</option>
+          </select>
+          <div class="inline-note">
+            Use fixed pixel mode to prevent figure width changes from only widening the colorbar.
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Colorbar length (if fixedPx)<span class="unit">px</span></label>
+          <input id="cbLenPx" type="number" step="10" min="200" placeholder="e.g. 700" />
+        </div>
+        <div class="field">
+          <label>Colorbar thickness<span class="unit">px</span></label>
+          <input id="cbThickPx" type="number" step="1" min="8" value="22" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Export format<span class="unit">png/svg</span></label>
+          <select id="exportFmt">
+            <option value="png" selected>PNG</option>
+            <option value="svg">SVG</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Export scale<span class="unit">×</span></label>
+          <input id="exportScale" type="number" step="0.5" min="1" value="3" />
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button id="btnExport">Export plot image</button>
+        <button id="btnForceSquare">Force square (INNER W=H)</button>
+      </div>
+
+      <div id="validationBox"></div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="k">Patients per bed-year (occ=0.85)</div>
+          <div class="v" id="kpiPatients">—</div>
+        </div>
+        <div class="kpi">
+          <div class="k">Max savings (per bed-year)</div>
+          <div class="v" id="kpiMaxBed">—</div>
+        </div>
+        <div class="kpi">
+          <div class="k">Max savings (ICU total)</div>
+          <div class="v" id="kpiMaxICU">—</div>
+        </div>
+        <div class="kpi">
+          <div class="k">At (occ=0.85, use=0.50)</div>
+          <div class="v" id="kpiExample">—</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="equation" id="eqBox"></div>
+
+      <div class="hint">
+        Important: we intentionally do NOT use scaleanchor/scaleratio. The plot box is square in pixels, but the data aspect ratio is free (matches your publication-style look).
+      </div>
+    </div>
+  </div>
+
+  <!-- Plot -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Heatmap + isobars</h2>
+      <span class="pill" id="metaPill">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="chart-scroll">
+        <div id="chartWrap">
+          <div id="chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div>Axes/labels/contours/guide lines are white. Plot sizing is pixel-accurate in Manual INNER mode.</div>
+  <div class="pill">created by Nick Mark @nickmmark</div>
+</div>
+
+<script>
+  /**
+   * Presets from params.py:
+   * SPEC_CASES low/mid/high: sp_kg = 0.09, 0.13, 0.20
+   * PENLIGHT_SP_KG = 0.20
+   * LOS_DAYS = 4.0
+   */
+  const PRESETS = {
+    penlight: { spKg: 0.20, losDays: 4.0, title: "CO₂e savings per bed-year — Penlight (single vs shared use)", guides: "on" },
+    spec_low: { spKg: 0.09, losDays: 4.0, title: "CO₂e savings per bed-year — SPEC low (Sₚ=0.09 kg/patient)", guides: "off" },
+    spec_mid: { spKg: 0.13, losDays: 4.0, title: "CO₂e savings per bed-year — SPEC mid (Sₚ=0.13 kg/patient)", guides: "off" },
+    spec_high:{ spKg: 0.20, losDays: 4.0, title: "CO₂e savings per bed-year — SPEC high (Sₚ=0.20 kg/patient)", guides: "off" },
+    custom:   { spKg: 0.20, losDays: 4.0, title: "CO₂e savings per bed-year — Custom", guides: "off" },
+  };
+
+  const YGB_SCALE = [
+    [0.0, "#ffff66"],
+    [0.5, "#33cc33"],
+    [1.0, "#0066cc"],
+  ];
+
+  const WHITE = "#ffffff";
+
+  function nowStamp(){
+    const d = new Date();
+    return d.toLocaleString(undefined, {year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit"});
+  }
+
+  function linspace(a,b,n){
+    const out = [];
+    if (n === 1) return [a];
+    const step = (b-a)/(n-1);
+    for (let i=0;i<n;i++) out.push(a + i*step);
+    return out;
+  }
+
+  function clamp(x, lo, hi){ return Math.min(hi, Math.max(lo, x)); }
+
+  function getState(){
+    const preset = document.getElementById("preset").value;
+
+    const spKg = Number(document.getElementById("spKg").value);
+    const losDays = Number(document.getElementById("losDays").value);
+    const beds = Math.max(1, Math.round(Number(document.getElementById("beds").value)));
+    const gridN = Math.max(21, Math.round(Number(document.getElementById("gridN").value)));
+
+    const occMin = Number(document.getElementById("occMin").value);
+    const occMax = Number(document.getElementById("occMax").value);
+    const useMin = Number(document.getElementById("useMin").value);
+    const useMax = Number(document.getElementById("useMax").value);
+
+    const isoStep = Math.max(1, Number(document.getElementById("isoStep").value));
+    const vmaxRaw = document.getElementById("vmax").value.trim();
+    const vmax = vmaxRaw === "" ? null : Math.max(0, Number(vmaxRaw));
+
+    const guides = document.getElementById("guides").value;
+    const title = document.getElementById("title").value.trim();
+
+    // sizing
+    const sizeMode = document.getElementById("sizeMode").value;
+
+    const innerW = Math.max(200, Math.floor(Number(document.getElementById("innerPlotW").value)));
+    const innerH = Math.max(200, Math.floor(Number(document.getElementById("innerPlotH").value)));
+
+    const figWRaw = document.getElementById("figW").value.trim();
+    const figHRaw = document.getElementById("figH").value.trim();
+    const figW = figWRaw === "" ? null : Math.max(300, Math.floor(Number(figWRaw)));
+    const figH = figHRaw === "" ? null : Math.max(300, Math.floor(Number(figHRaw)));
+
+    const mLeft = Math.max(0, Math.floor(Number(document.getElementById("mLeft").value)));
+    const mRight = Math.max(0, Math.floor(Number(document.getElementById("mRight").value)));
+    const mTop = Math.max(0, Math.floor(Number(document.getElementById("mTop").value)));
+    const mBottom = Math.max(0, Math.floor(Number(document.getElementById("mBottom").value)));
+
+    // colorbar controls
+    const cbLenMode = document.getElementById("cbLenMode").value;
+    const cbLenPxRaw = document.getElementById("cbLenPx").value.trim();
+    const cbLenPx = cbLenPxRaw === "" ? null : Math.max(200, Math.floor(Number(cbLenPxRaw)));
+    const cbThickPx = Math.max(8, Math.floor(Number(document.getElementById("cbThickPx").value)));
+
+    return {
+      preset,
+      spKg: Math.max(0, spKg || 0),
+      losDays: Math.max(0.1, losDays || 0.1),
+      beds,
+      gridN,
+      occMin: clamp(occMin, 0, 1),
+      occMax: clamp(occMax, 0, 1),
+      useMin: clamp(useMin, 0, 1),
+      useMax: clamp(useMax, 0, 1),
+      isoStep,
+      vmax,
+      guides,
+      title,
+
+      sizeMode,
+      innerW,
+      innerH,
+      figW,
+      figH,
+      mLeft,
+      mRight,
+      mTop,
+      mBottom,
+
+      cbLenMode,
+      cbLenPx,
+      cbThickPx
+    };
+  }
+
+  function validate(s){
+    const issues = [];
+    if (!(s.occMin < s.occMax)) issues.push("Occupancy min must be < occupancy max.");
+    if (!(s.useMin < s.useMax)) issues.push("Use fraction min must be < use fraction max.");
+    if (!isFinite(s.spKg) || s.spKg < 0) issues.push("Sₚ must be ≥ 0.");
+    if (!isFinite(s.losDays) || s.losDays <= 0) issues.push("LOS must be > 0.");
+
+    if (s.sizeMode === "manualFigure"){
+      if (s.figW === null || s.figH === null) issues.push("Manual FIGURE mode requires FIGURE width and height.");
+      if (s.figW !== null && (s.mLeft + s.mRight) >= s.figW) issues.push("Margins invalid: left+right must be < figure width.");
+      if (s.figH !== null && (s.mTop + s.mBottom) >= s.figH) issues.push("Margins invalid: top+bottom must be < figure height.");
+    }
+
+    if (s.cbLenMode === "fixedPx" && s.cbLenPx === null) issues.push("Colorbar fixedPx mode requires a pixel length.");
+
+    return issues;
+  }
+
+  /**
+   * Core model:
+   * patients_per_bed_year = (365*occupancy)/LOS
+   * savings_per_bed_year  = S_p * patients_per_bed_year * use_fraction
+   */
+  function perBedYear(spKg, occupancy, losDays, useFraction){
+    const patients = (365.0 * occupancy) / losDays;
+    return spKg * patients * useFraction;
+  }
+
+  function computeGrid(s){
+    const occ = linspace(s.occMin, s.occMax, s.gridN);
+    const use = linspace(s.useMin, s.useMax, s.gridN);
+
+    const Z = [];
+    let zMax = 0;
+
+    for (let i=0;i<use.length;i++){
+      const row = [];
+      for (let j=0;j<occ.length;j++){
+        const z = perBedYear(s.spKg, occ[j], s.losDays, use[i]);
+        row.push(z);
+        if (z > zMax) zMax = z;
+      }
+      Z.push(row);
+    }
+    return {occ, use, Z, zMax};
+  }
+
+  /**
+   * Effective sizing:
+   * - manualInner: innerW/innerH are user specified; figure W/H derived from margins + inner sizes
+   * - manualFigure: figure W/H user specified; innerW/innerH derived by subtracting margins
+   * - auto: fit the available column width; inner plot defaults square
+   */
+  function getEffectiveSizesPx(s){
+    const wrap = document.getElementById("chartWrap");
+    const rect = wrap.getBoundingClientRect();
+
+    let figW, figH, innerW, innerH;
+
+    if (s.sizeMode === "manualInner"){
+      innerW = s.innerW;
+      innerH = s.innerH;
+      figW = s.mLeft + s.mRight + innerW;
+      figH = s.mTop + s.mBottom + innerH;
+    } else if (s.sizeMode === "manualFigure"){
+      figW = s.figW;
+      figH = s.figH;
+      innerW = Math.max(1, figW - s.mLeft - s.mRight);
+      innerH = Math.max(1, figH - s.mTop - s.mBottom);
+    } else {
+      // auto
+      figW = Math.max(420, Math.floor(rect.width || 900));
+      innerW = Math.max(200, figW - s.mLeft - s.mRight);
+      innerH = innerW; // default square plot box in auto mode
+      figH = s.mTop + s.mBottom + innerH;
+    }
+
+    // Safety clamps
+    figW = Math.max(300, Math.floor(figW));
+    figH = Math.max(300, Math.floor(figH));
+    innerW = Math.max(1, Math.floor(innerW));
+    innerH = Math.max(1, Math.floor(innerH));
+
+    return {figW, figH, innerW, innerH};
+  }
+
+  function computeColorbarConfig(s, sizes){
+    const base = {
+      orientation: "h",
+      x: 0.5,
+      xanchor: "center",
+      y: -0.22,
+      yanchor: "top",
+      thicknessmode: "pixels",
+      thickness: s.cbThickPx,
+      outlinecolor: "rgba(255,255,255,0.25)",
+      outlinewidth: 1,
+      title: {text: "CO₂e savings per bed-year (kg)", side: "bottom", font:{color: WHITE}},
+      tickfont: {color: WHITE},
+      tickformat: ".1f"
+    };
+
+    if (s.cbLenMode === "fillFigure"){
+      return {...base, lenmode:"fraction", len: 0.92};
+    }
+
+    let lenPx = sizes.innerW;
+    if (s.cbLenMode === "fixedPx") lenPx = s.cbLenPx;
+
+    return {...base, lenmode:"pixels", len: Math.max(200, Math.floor(lenPx))};
+  }
+
+  function updateKPIs(s, grid, sizes){
+    const patients = (365.0 * 0.85) / s.losDays;
+    document.getElementById("kpiPatients").textContent = `${patients.toFixed(1)} pts/bed-yr`;
+
+    const maxBed = grid.zMax;
+    document.getElementById("kpiMaxBed").textContent = `${maxBed.toFixed(2)} kg/bed-yr`;
+
+    const maxICU = maxBed * s.beds;
+    document.getElementById("kpiMaxICU").textContent = `${maxICU.toFixed(1)} kg/yr (${(maxICU/1000).toFixed(2)} t/yr)`;
+
+    const ex = perBedYear(s.spKg, 0.85, s.losDays, 0.50);
+    document.getElementById("kpiExample").textContent = `${ex.toFixed(2)} kg/bed-yr`;
+
+    const eq = [
+      "Model:",
+      "savings_bed_year = S_p × (365 × occupancy / LOS) × use_fraction",
+      "",
+      `S_p = ${s.spKg.toFixed(2)} kg CO₂e / patient`,
+      `LOS = ${s.losDays.toFixed(1)} days`,
+      `ICU size = ${s.beds} beds`,
+      "",
+      `Sizing mode = ${s.sizeMode}`,
+      `Figure = ${sizes.figW} × ${sizes.figH} px`,
+      `Inner plot = ${sizes.innerW} × ${sizes.innerH} px`,
+      "",
+      "NOTE: Plot box is square in pixels, but axis scaling is not forced (no scaleanchor)."
+    ].join("\n");
+    document.getElementById("eqBox").textContent = eq;
+  }
+
+  function applyPixelBoxStyles(sizes){
+    // Enforce pixel sizes at the DOM level so CSS doesn't squish it.
+    const chart = document.getElementById("chart");
+    const wrap = document.getElementById("chartWrap");
+
+    wrap.style.width = `${sizes.figW}px`;
+    wrap.style.height = `${sizes.figH}px`;
+    chart.style.width = `${sizes.figW}px`;
+    chart.style.height = `${sizes.figH}px`;
+  }
+
+  function plot(s, grid){
+    const sizes = getEffectiveSizesPx(s);
+    applyPixelBoxStyles(sizes);
+
+    // Auto vmax corresponds to occupancy=1, use=1
+    const autoVmax = s.spKg * (365.0 / s.losDays) * 1.0;
+    const vMax = (s.vmax === null) ? autoVmax : s.vmax;
+
+    const cb = computeColorbarConfig(s, sizes);
+
+    const heat = {
+      type: "heatmap",
+      x: grid.occ,
+      y: grid.use,
+      z: grid.Z,
+      colorscale: YGB_SCALE,
+      zmin: 0,
+      zmax: vMax,
+      colorbar: cb,
+      hovertemplate:
+        "Occupancy: %{x:.2f}<br>" +
+        "Use fraction: %{y:.2f}<br>" +
+        "Savings: %{z:.2f} kg CO₂e / bed-yr<extra></extra>"
+    };
+
+    const step = s.isoStep;
+    const maxLevel = Math.max(step, Math.floor(vMax/step)*step);
+
+    const contours = {
+      type: "contour",
+      x: grid.occ,
+      y: grid.use,
+      z: grid.Z,
+      showscale: false,
+      contours: {
+        coloring: "none",
+        showlabels: true,
+        start: step,
+        end: maxLevel,
+        size: step,
+      },
+      line: {color: WHITE, width: 2},
+      hoverinfo: "skip",
+      labelfont: {color: WHITE, size: 14}
+    };
+
+    const shapes = [];
+    if (s.guides === "on"){
+      shapes.push({
+        type: "line",
+        x0: s.occMin, x1: s.occMax,
+        y0: 0.99, y1: 0.99,
+        xref: "x", yref: "y",
+        line: {color: WHITE, width: 3, dash: "dash"}
+      });
+      shapes.push({
+        type: "line",
+        x0: s.occMin, x1: s.occMax,
+        y0: 0.2, y1: 0.2,
+        xref: "x", yref: "y",
+        line: {color: WHITE, width: 3, dash: "dashdot"}
+      });
+    }
+
+    const layout = {
+      autosize: false, // IMPORTANT: honor width/height exactly
+      width: sizes.figW,
+      height: sizes.figH,
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "rgba(0,0,0,0)",
+      margin: {l: s.mLeft, r: s.mRight, t: s.mTop, b: s.mBottom},
+      title: {text: s.title || "CO₂e savings per bed-year", x: 0.5, xanchor: "center", font:{color: WHITE}},
+      font: {color: WHITE},
+
+      xaxis: {
+        title: {text: "ICU bed occupancy (fraction)", font:{color: WHITE}},
+        range: [s.occMin, s.occMax],
+        tickformat: ".2f",
+        tickfont: {color: WHITE},
+        gridcolor: "rgba(255,255,255,0.15)",
+        zerolinecolor: "rgba(255,255,255,0.20)",
+        linecolor: "rgba(255,255,255,0.65)",
+        mirror: true,
+        ticks: "outside",
+        tickcolor: "rgba(255,255,255,0.65)"
+      },
+
+      yaxis: {
+        title: {
+          text: (s.preset === "penlight")
+            ? "Fraction of patients issued<br>a disposable penlight"
+            : "Pupillometry<br>use fraction",
+          font:{color: WHITE}
+        },
+        range: [s.useMin, s.useMax],
+        tickformat: ".1f",
+        tickfont: {color: WHITE},
+        gridcolor: "rgba(255,255,255,0.15)",
+        zerolinecolor: "rgba(255,255,255,0.20)",
+        linecolor: "rgba(255,255,255,0.65)",
+        mirror: true,
+        ticks: "outside",
+        tickcolor: "rgba(255,255,255,0.65)"
+        // IMPORTANT FIX: DO NOT set scaleanchor/scaleratio.
+        // We want a square plot *box* in pixels, not equal units-per-pixel.
+      },
+
+      shapes
+    };
+
+    Plotly.react("chart", [heat, contours], layout, {displayModeBar: false, responsive: false});
+
+    document.getElementById("metaPill").textContent =
+      `fig ${sizes.figW}×${sizes.figH}px | inner ${sizes.innerW}×${sizes.innerH}px | cb ${s.cbLenMode}`;
+  }
+
+  function render(){
+    const s = getState();
+    document.getElementById("updatedPill").textContent = `updated: ${nowStamp()}`;
+
+    const issues = validate(s);
+    const box = document.getElementById("validationBox");
+    box.innerHTML = "";
+    if (issues.length){
+      const div = document.createElement("div");
+      div.className = "danger";
+      div.innerHTML = "<b>Fix:</b><br>" + issues.map(x => `• ${x}`).join("<br>");
+      box.appendChild(div);
+    }
+
+    const grid = computeGrid(s);
+    const sizes = getEffectiveSizesPx(s);
+    updateKPIs(s, grid, sizes);
+    plot(s, grid);
+  }
+
+  function applyPreset(key){
+    const p = PRESETS[key] || PRESETS.custom;
+    document.getElementById("spKg").value = p.spKg;
+    document.getElementById("losDays").value = p.losDays;
+    document.getElementById("title").value = p.title;
+    document.getElementById("guides").value = p.guides;
+
+    document.getElementById("statusPill").textContent =
+      `preset: ${document.getElementById("preset").selectedOptions[0].textContent}`;
+    render();
+  }
+
+  function exportPlot(){
+    const fmt = document.getElementById("exportFmt").value;
+    const scale = Math.max(1, Number(document.getElementById("exportScale").value) || 2);
+    const s = getState();
+    const safeName = (s.title || "plot")
+      .replaceAll("CO₂e", "CO2e")
+      .replace(/[^\w\-]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 90);
+
+    Plotly.downloadImage("chart", {
+      format: fmt,
+      filename: safeName,
+      scale: scale
+    });
+  }
+
+  function forceSquare(){
+    const s = getState();
+    const target = Math.max(200, s.innerW);
+    document.getElementById("sizeMode").value = "manualInner";
+    document.getElementById("innerPlotW").value = target;
+    document.getElementById("innerPlotH").value = target;
+    document.getElementById("cbLenMode").value = "matchPlotPx";
+    render();
+  }
+
+  function wire(){
+    const ids = [
+      "preset","spKg","losDays","beds","gridN",
+      "occMin","occMax","useMin","useMax",
+      "isoStep","vmax","guides","title",
+      "sizeMode","innerPlotW","innerPlotH","figW","figH",
+      "mLeft","mRight","mTop","mBottom",
+      "cbLenMode","cbLenPx","cbThickPx"
+    ];
+
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener("input", () => {
+        if (id === "preset") applyPreset(document.getElementById("preset").value);
+        else render();
+      });
+      el.addEventListener("change", () => {
+        if (id === "preset") applyPreset(document.getElementById("preset").value);
+        else render();
+      });
+    });
+
+    document.getElementById("btnExport").addEventListener("click", exportPlot);
+    document.getElementById("btnForceSquare").addEventListener("click", forceSquare);
+
+    // In AUTO mode, update if the plot column changes width
+    const wrap = document.getElementById("chartWrap");
+    const ro = new ResizeObserver(() => {
+      const s = getState();
+      if (s.sizeMode === "auto") render();
+    });
+    ro.observe(wrap);
+
+    window.addEventListener("orientationchange", () => render());
+  }
+
+  (function init(){
+    wire();
+    applyPreset("penlight");
+    // Default to manualInner since you’re actively testing plot-box sizing.
+    document.getElementById("sizeMode").value = "manualInner";
+    render();
+  })();
+</script>
+</body>
+</html>
