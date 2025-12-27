@@ -9,7 +9,13 @@ Carbon emissions per ICU bed was the metric used.
 ```math
 E_{bed} = S_p \times \left( \frac{365 \times occupancy}{LOS} \right) \times f_{use}
 ```
+* Sp​ is the emission associated with one device per patient (kg CO₂e/patient). 
 
+* Occupancy is the fraction of the year the bed is in use (e.g., 0.9 = 90 %). 
+
+* LOS (length of stay) is the average number of days per patient in that ICU.
+
+* f_{use}​ is the fraction of those patients who receive the device (for example, fraction of ICU patients who undergo pupillometry). 
 
 ## How this repository works
 All analyses and figures in this study were generated using open-source Python tools. The workflow models the life-cycle carbon footprint (kg CO₂e) of single-use ICU devices, annualized to per-bed-year values under varying occupancy and utilization.
