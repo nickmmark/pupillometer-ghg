@@ -6,7 +6,7 @@ All analyses and figures in this study were generated using open-source Python t
 
 The repository is structured as a lightweight, fully reproducible pipeline.
 
-Try the interactive version of the calculator [here]().
+Try the interactive version of the calculator [here](https://nickmmark.github.io/pupillometer-ghg/).
 ```
 pupillometry-carbon/
 ├── src/pupillo/
