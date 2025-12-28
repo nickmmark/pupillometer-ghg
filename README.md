@@ -1,6 +1,8 @@
 # pupillometer-ghg
 calculate the greenhouse gas emissions from disposable penlights and hardware pupillometers
 
+![demonstration of interactive carbon savings reduction](https://github.com/nickmmark/pupillometer-ghg/blob/main/interactive_demo.gif)
+
 ## Overview
 Critical care is carbon intensive. Intensive Care Units (ICUs) in the US produce approximately 138 kg CO2 per bed day, equivalent to driving over 350 miles every day.
 Strategies to enhance ICU sustainability and reduced carbon emissions are necessary. (see [ICU OnePager for examples](https://onepagericu.com/icu-sustainability))
