@@ -10,7 +10,7 @@ One potential strategy is to replace disposable penlights and hardware pupillome
 I estimate the carbon footprint inherent in disposable penlights and harware pupillometers and the potential carbon emissions saved by switching to software based pupillometry.
 
 ### Calculations
-The carbon footprint of penlights and disposable eye covers was estimated usings:
+The carbon footprint of penlights and disposable eye covers was estimated using:
 * ~3.0–3.5 kg CO₂e per kg of plastic
 * ~0.7–1.0 kg CO₂e per kg paperboard packaging
 * ~0.062–0.12 kg CO₂e per tonne-km for road-truck freight
